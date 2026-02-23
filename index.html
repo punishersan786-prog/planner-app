@@ -118,7 +118,7 @@ button{
 <body>
 
 <div class="planner">
-<div class="tabs">
+<div class="tabs"onclick="show('habits')">HABITS</div>
   <div class="tab active-tab" data-target="year">YEAR</div>
   <div class="tab" data-target="month">MONTH</div>
   <div class="tab" data-target="week">WEEK</div>
@@ -126,6 +126,14 @@ button{
   <div class="tab" data-target="notes">NOTES</div>
 </div>
 <div class="pages">
+  <div id="habits" class="page">
+  <h2>Habit Tracker</h2>
+
+  <input id="newHabit" placeholder="Add new habit...">
+  <button onclick="addHabit()">Add</button>
+
+  <div id="habitGrid" style="margin-top:20px; overflow:auto;"></div>
+</div>
 <div id="year" class="page active">
 <h2>Year Overview</h2>
 <div id="yearMonths"></div>
@@ -163,6 +171,82 @@ let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 const tabs = document.querySelectorAll(".tab");
 const pages = document.querySelectorAll(".page");
+function addHabit() {
+  const input = document.getElementById("newHabit");
+  if (!input.value.trim()) return;
+
+  habits.push({
+    id: Date.now(),
+    name: input.value.trim(),
+    completions: {}
+  });
+
+  localStorage.setItem("habits", JSON.stringify(habits));
+  input.value = "";
+  renderHabits();
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function renderHabits() {
+  const grid = document.getElementById("habitGrid");
+  grid.innerHTML = "";
+
+  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+
+  // Header row
+  const headerRow = document.createElement("div");
+  headerRow.style.display = "grid";
+  headerRow.style.gridTemplateColumns = `200px repeat(${daysInMonth}, 40px)`;
+  headerRow.style.gap = "5px";
+  headerRow.innerHTML = "<strong>Habit</strong>";
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    headerRow.innerHTML += `<div style="text-align:center; font-size:12px;">${d}</div>`;
+  }
+
+  grid.appendChild(headerRow);
+
+  // Habit rows
+  habits.forEach(habit => {
+    const row = document.createElement("div");
+    row.style.display = "grid";
+    row.style.gridTemplateColumns = `200px repeat(${daysInMonth}, 40px)`;
+    row.style.gap = "5px";
+    row.style.marginTop = "8px";
+
+    row.innerHTML = `<div>${habit.name}</div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateKey = `${currentYear}-${currentMonth+1}-${d}`;
+      const checked = habit.completions[dateKey] ? "checked" : "";
+
+      row.innerHTML += `
+        <div style="text-align:center;">
+          <input type="checkbox" ${checked}
+            onchange="toggleHabit(${habit.id}, '${dateKey}')">
+        </div>
+      `;
+    }
+
+    grid.appendChild(row);
+  });
+}
+
+function toggleHabit(id, dateKey) {
+  const habit = habits.find(h => h.id === id);
+  if (!habit) return;
+
+  if (habit.completions[dateKey]) {
+    delete habit.completions[dateKey];
+  } else {
+    habit.completions[dateKey] = true;
+  }
+
+  localStorage.setItem("habits", JSON.stringify(habits));
+}
 
 tabs.forEach(tab => {
   tab.addEventListener("click", () => {
@@ -269,6 +353,7 @@ renderYear();
 renderMonth();
 renderWeek();
 renderDay();
+renderHabits();
 
 if('serviceWorker' in navigator){
 navigator.serviceWorker.register('sw.js');
