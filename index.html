@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#fbcfe8">
+<link rel="manifest" href="manifest.json">
+<title>Luxury Pastel Planner</title>
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  background:linear-gradient(135deg,#fdf2f8,#f3e8ff,#e0f2fe);
+  display:flex;
+  justify-content:center;
+  padding:20px;
+}
+.planner{
+  width:100%;
+  max-width:1200px;
+  background:#ffffff;
+  border-radius:32px;
+  box-shadow:0 40px 80px rgba(0,0,0,0.08);
+  display:flex;
+  overflow:hidden;
+}
+.tabs{
+  width:90px;
+  background:linear-gradient(180deg,#fbcfe8,#e9d5ff,#bae6fd);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding-top:40px;
+  gap:20px;
+}
+.tab{
+  writing-mode:vertical-rl;
+  transform:rotate(180deg);
+  background:white;
+  padding:14px 10px;
+  border-radius:18px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.3s;
+}
+.tab:hover{transform:rotate(180deg) scale(1.08);}
+.pages{
+  flex:1;
+  padding:40px;
+  background:repeating-linear-gradient(#fff,#fff 30px,#f8fafc 31px);
+}
+.page{display:none;}
+.active{display:block;}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
+.day{
+  height:80px;
+  border-radius:16px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:15px;}
+.week-day{
+  background:#fdf2f8;
+  border-radius:18px;
+  padding:15px;
+  min-height:200px;
+}
+.schedule div{
+  padding:5px 0;
+  border-bottom:1px solid #eee;
+}
+.task{
+  background:#e9d5ff;
+  padding:8px;
+  border-radius:10px;
+  margin-bottom:6px;
+}
+button{
+  background:#bae6fd;
+  border:none;
+  padding:8px 14px;
+  border-radius:10px;
+  margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<div class="planner">
+<div class="tabs">
+<div class="tab" onclick="show('year')">YEAR</div>
+<div class="tab" onclick="show('month')">MONTH</div>
+<div class="tab" onclick="show('week')">WEEK</div>
+<div class="tab" onclick="show('day')">DAY</div>
+<div class="tab" onclick="show('notes')">NOTES</div>
+</div>
+
+<div class="pages">
+<div id="year" class="page active">
+<h2>Year Overview</h2>
+<div id="yearMonths"></div>
+</div>
+
+<div id="month" class="page">
+<h2 id="monthTitle"></h2>
+<div class="calendar" id="calendar"></div>
+</div>
+
+<div id="week" class="page">
+<h2>Weekly Planner</h2>
+<div class="week" id="weekGrid"></div>
+</div>
+
+<div id="day" class="page">
+<h2 id="dayTitle"></h2>
+<div class="schedule" id="schedule"></div>
+<input id="taskInput" placeholder="Add task...">
+<div id="taskList"></div>
+<button onclick="window.print()">Export PDF</button>
+</div>
+
+<div id="notes" class="page">
+<h2>Notes</h2>
+<textarea id="notesArea" style="width:100%;height:250px;border:none;"></textarea>
+</div>
+</div>
+</div>
+
+<script>
+const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+let selectedMonth=new Date().getMonth();
+let selectedDate=new Date().getDate();
+let tasks=JSON.parse(localStorage.getItem('tasks')||'[]');
+
+function show(id){
+document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+}
+
+function renderYear(){
+let c=document.getElementById('yearMonths');
+c.innerHTML='';
+months.forEach((m,i)=>{
+let b=document.createElement('button');
+b.innerText=m;
+b.onclick=()=>{selectedMonth=i;renderMonth();show('month');};
+c.appendChild(b);
+});
+}
+
+function renderMonth(){
+document.getElementById('monthTitle').innerText=months[selectedMonth];
+let cal=document.getElementById('calendar');
+cal.innerHTML='';
+days.forEach(d=>{
+let h=document.createElement('div');
+h.innerText=d;
+h.style.fontWeight='bold';
+cal.appendChild(h);
+});
+let first=new Date(new Date().getFullYear(),selectedMonth,1);
+let start=first.getDay();
+let total=new Date(new Date().getFullYear(),selectedMonth+1,0).getDate();
+for(let i=0;i<start;i++)cal.appendChild(document.createElement('div'));
+for(let d=1;d<=total;d++){
+let cell=document.createElement('div');
+cell.className='day';
+cell.innerText=d;
+cell.onclick=()=>{selectedDate=d;renderDay();show('day');};
+cal.appendChild(cell);
+}
+}
+
+function renderWeek(){
+let w=document.getElementById('weekGrid');
+w.innerHTML='';
+days.forEach(d=>{
+let div=document.createElement('div');
+div.className='week-day';
+div.innerHTML="<strong>"+d+"</strong>";
+w.appendChild(div);
+});
+}
+
+function renderDay(){
+document.getElementById('dayTitle').innerText=months[selectedMonth]+" "+selectedDate;
+let sched=document.getElementById('schedule');
+sched.innerHTML='';
+for(let i=8;i<=20;i++){
+let d=document.createElement('div');
+d.innerText=i+":00";
+sched.appendChild(d);
+}
+renderTasks();
+}
+
+function renderTasks(){
+let list=document.getElementById('taskList');
+list.innerHTML='';
+tasks.forEach((t,i)=>{
+let div=document.createElement('div');
+div.className='task';
+div.innerText=t;
+list.appendChild(div);
+});
+}
+
+document.getElementById('taskInput').addEventListener('keypress',e=>{
+if(e.key==='Enter'&&e.target.value){
+tasks.push(e.target.value);
+localStorage.setItem('tasks',JSON.stringify(tasks));
+e.target.value='';
+renderTasks();
+}
+});
+
+document.getElementById('notesArea').value=localStorage.getItem('notes')||'';
+document.getElementById('notesArea').oninput=e=>localStorage.setItem('notes',e.target.value);
+
+renderYear();
+renderMonth();
+renderWeek();
+renderDay();
+
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+</body>
+</html>

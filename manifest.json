@@ -1,0 +1,9 @@
+{
+  "name": "Luxury Pastel Planner",
+  "short_name": "Planner",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#fbcfe8",
+  "icons": []
+}
