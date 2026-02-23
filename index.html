@@ -114,6 +114,13 @@ button{
   margin-top:10px;
 }
 </style>
+#habitGrid {
+  width: 100%;
+}
+
+#habitGrid input[type="checkbox"] {
+  transform: scale(0.9);
+}
 </head>
 <body>
 
@@ -132,8 +139,11 @@ button{
   <input id="newHabit" placeholder="Add new habit...">
   <button onclick="addHabit()">Add</button>
 
-  <div id="habitGrid" style="margin-top:20px; overflow:auto;"></div>
-</div>
+  <div id="habitGrid" style="
+  margin-top:20px;
+  overflow-x:auto;
+  max-width:100%;
+"></div>
 <div id="year" class="page active">
 <h2>Year Overview</h2>
 <div id="yearMonths"></div>
