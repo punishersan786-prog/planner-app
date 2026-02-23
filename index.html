@@ -157,6 +157,10 @@ button{
 </div>
 
 <script>
+// ===== HABIT STORAGE =====
+let habits = JSON.parse(localStorage.getItem("habits")) || [];
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
 const tabs = document.querySelectorAll(".tab");
 const pages = document.querySelectorAll(".page");
 
